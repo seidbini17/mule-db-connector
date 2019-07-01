@@ -51,7 +51,7 @@ public class StatementStreamingResultSetCloser {
     }
   }
 
-  private void close(ResultSet resultSet) {
+  private synchronized void close(ResultSet resultSet) {
     try {
       if (!resultSet.isClosed()) {
         resultSet.close();
