@@ -17,7 +17,7 @@
         <flow-ref name="executeDdlXA"/>
     </munit:before-suite>
 
-    <munit:test name="mysql-xa-reconnection-test-case" >
+    <munit:test name="insert-lost-and-recovered" >
 
         <munit:execution>
             <flow-ref name="disconnectProxy"/>
@@ -48,6 +48,37 @@
                     message="Should have one record"/>
             <flow-ref name="deleteTableMySql"/>
         </munit:validation>
+
+    </munit:test>
+
+    <munit:test name="connection-lost-and-eventually-recovered">
+
+        <munit:execution>
+            <flow-ref name="disconnectProxy"/>
+            <async>
+                <logger message="#[ import * from dw::Runtime --- '' wait 2000]"/>
+                <flow-ref name="reconnectProxy"/>
+            </async>
+            <try transactionType="XA" transactionalAction="ALWAYS_BEGIN">
+                <until-successful maxRetries="10" millisBetweenRetries="500">
+                    <logger message="Trying to insert"/>
+                    <flow-ref name="executeInsertXAUnstable"/>
+                </until-successful>
+            </try>
+        </munit:execution>
+
+        <munit:validation>
+            <db:select config-ref="MYSQL_CONFIG_XA_UNSTABLE">
+                <db:sql>SELECT COUNT(*) as theCount from TestDdl</db:sql>
+            </db:select>
+            <munit-tools:assert-equals
+                    actual="#[payload.theCount[0]]"
+                    expected="#[1]"
+                    message="Should have one record"/>
+            <flow-ref name="deleteTableMySql"/>
+
+        </munit:validation>
+
     </munit:test>
 
     <flow name="executeDdlXA">
