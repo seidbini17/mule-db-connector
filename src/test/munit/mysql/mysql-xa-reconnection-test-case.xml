@@ -1,0 +1,96 @@
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
+      xmlns:db="http://www.mulesoft.org/schema/mule/db"
+      xmlns:java="http://www.mulesoft.org/schema/mule/java"
+      xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+      xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+      http://www.mulesoft.org/schema/mule/munit-tools http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
+      http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+      http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+      ">
+
+    <munit:config name="mysql-xa-reconnection-test-case.xml" minMuleVersion="4.2.1"/>
+
+    <munit:before-suite name="before-db-test-suites" description="Before suite actions">
+        <flow-ref name="executeDdlXA"/>
+    </munit:before-suite>
+
+    <munit:test name="mysql-xa-reconnection-test-case" >
+
+        <munit:execution>
+            <flow-ref name="disconnectProxy"/>
+
+            <logger level="INFO" message="publishing from unstable connection"/>
+
+            <set-variable variableName="imageName" value="mssql"/>
+            <set-variable variableName="message" value="#[randomInt(1000000) as String]"/>
+            <try transactionType="XA" transactionalAction="ALWAYS_BEGIN">
+            <db:insert config-ref="MYSQL_CONFIG_XA_UNSTABLE">
+                <db:sql>INSERT INTO TestDdl(Name) VALUES (:aName)</db:sql>
+                <db:input-parameters><![CDATA[#[{
+	aName: "test1"
+}]]]></db:input-parameters>
+            </db:insert>
+                <error-handler>
+                    <on-error-continue logException="false" type="DB:CONNECTIVITY">
+                        <logger message="Connectivity error"/>
+                    </on-error-continue>
+                </error-handler>
+            </try>
+            <flow-ref name="reconnectProxy"/>
+            <logger message="#[ import * from dw::Runtime --- 'Waiting on reconnect' wait 3000]"/>
+
+            <try transactionType="XA" transactionalAction="ALWAYS_BEGIN">
+            <db:insert config-ref="MYSQL_CONFIG_XA_UNSTABLE">
+                <db:sql>INSERT INTO TestDdl(Name) VALUES (:aName)</db:sql>
+                <db:input-parameters><![CDATA[#[{
+	aName: "test1"
+}]]]></db:input-parameters>
+            </db:insert>
+            </try>
+
+        </munit:execution>
+
+        <munit:validation>
+            <db:select config-ref="MYSQL_CONFIG_XA_UNSTABLE">
+                <db:sql>SELECT COUNT(*) as theCount from TestDdl</db:sql>
+            </db:select>
+            <munit-tools:assert-equals
+                    actual="#[payload.theCount[0]]"
+                    expected="#[1]"
+                    message="Should have one record"/>
+        </munit:validation>
+    </munit:test>
+
+    <flow name="executeDdlXA">
+        <db:execute-ddl config-ref="MYSQL_CONFIG_XA" queryTimeout="10" queryTimeoutUnit="SECONDS">
+            <db:sql>CREATE TABLE TestDdl(NAME VARCHAR(255))</db:sql>
+        </db:execute-ddl>
+    </flow>
+
+    <flow name="executeInsertXA">
+        <db:insert config-ref="MYSQL_CONFIG_XA_UNSTABLE">
+            <db:sql>INSERT INTO TestDdl(Name) VALUES (:aName)</db:sql>
+            <db:input-parameters><![CDATA[#[{
+	aName: "test1"
+}]]]></db:input-parameters>
+        </db:insert>
+    </flow>
+
+    <flow name="disconnectProxy">
+        <java:invoke-static class="org.mule.extension.db.internal.Utils.BadProxy" method="generateConnectivityIssue(String, String, String)">
+            <java:args>
+                #[{arg0: "3306", arg1: "mysql", arg2: ${connection.lost.port}}]
+            </java:args>
+        </java:invoke-static>
+    </flow>
+
+    <flow name="reconnectProxy">
+        <java:invoke-static class="org.mule.extension.db.internal.Utils.BadProxy" method="resolveConnectivityIssue()"/>
+    </flow>
+
+
+
+</mule>
