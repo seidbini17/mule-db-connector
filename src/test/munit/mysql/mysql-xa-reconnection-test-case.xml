@@ -81,6 +81,37 @@
 
     </munit:test>
 
+    <munit:test name="connection-lost-and-never-recover">
+        <munit:behavior>
+            <flow-ref name="disconnectProxy"/>
+        </munit:behavior>
+
+        <munit:execution>
+            <try>
+                <try transactionType="XA" transactionalAction="ALWAYS_BEGIN">
+                    <until-successful maxRetries="3" millisBetweenRetries="1000">
+                        <flow-ref name="executeInsertXAUnstable"/>
+                    </until-successful>
+                </try>
+                <error-handler>
+                    <on-error-continue/>
+                </error-handler>
+            </try>
+            <flow-ref name="reconnectProxy"/>
+        </munit:execution>
+
+        <munit:validation>
+            <db:select config-ref="MYSQL_CONFIG_XA_UNSTABLE">
+                <db:sql>SELECT COUNT(*) as theCount from TestDdl</db:sql>
+            </db:select>
+            <munit-tools:assert-equals
+                    actual="#[payload.theCount[0]]"
+                    expected="#[0]"
+                    message="Should have NO records"/>
+            <flow-ref name="deleteTableMySql"/>
+        </munit:validation>
+    </munit:test>
+
     <flow name="executeDdlXA">
         <db:execute-ddl config-ref="MYSQL_CONFIG_XA" queryTimeout="10" queryTimeoutUnit="SECONDS">
             <db:sql>CREATE TABLE TestDdl(NAME VARCHAR(255))</db:sql>
