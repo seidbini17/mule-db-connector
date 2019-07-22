@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+    <db:config name="ORACLE_CONFIG_XA" doc:name="Database Config" doc:id="7bfe2bd7-03a0-4719-91c1-d1ed40f78078" >
+        <db:oracle-connection host="0.0.0.0" port="1521" instance="ORCLCDB" user="SYSTEM" password="Oradoc_db1" useXaTransactions="true">
+            <reconnection >
+                <reconnect-forever frequency="500" />
+            </reconnection>
+            <db:pooling-profile/>
+        </db:oracle-connection>
+    </db:config>
+
+    <db:config name="ORACLE_CONFIG_XA_UNSTABLE" doc:name="Database Config" doc:id="f7f84727-15d3-40f0-a8b0-178ed0fded9a" >
+        <db:oracle-connection host="0.0.0.0" port="${connection.lost.port}" instance="ORCLCDB" user="SYSTEM" password="Oradoc_db1" useXaTransactions="true">
+            <reconnection >
+                <reconnect-forever frequency="500" />
+            </reconnection>
+            <db:pooling-profile/>
+        </db:oracle-connection>
+    </db:config>
+
+    <db:config name="ORACLE_CONFIG_UNSTABLE" doc:name="Database Config" doc:id="f7f84727-15d3-40f0-a8b0-178ed0fded9a" >
+        <db:oracle-connection host="0.0.0.0" port="${connection.lost.port}" instance="ORCLCDB" user="SYSTEM" password="Oradoc_db1">
+            <reconnection >
+                <reconnect-forever frequency="500" />
+            </reconnection>
+            <db:pooling-profile/>
+        </db:oracle-connection>
+    </db:config>
+
+    <db:config name="ORACLE_CONFIG_2" doc:name="Database Config" doc:id="b1b70ef3-c016-4489-b84a-3f4f341c4fab" >
+        <db:generic-connection url="jdbc:oracle:thin:@localhost:${connection.lost.port}:ORCLCDB" driverClassName="oracle.jdbc.driver.OracleDriver" user="SYSTEM" password="Oradoc_db1" useXaTransactions="true">
+            <reconnection >
+                <reconnect-forever frequency="500" />
+            </reconnection>
+            <db:pooling-profile/>
+        </db:generic-connection>
+    </db:config>
+
+</mule>

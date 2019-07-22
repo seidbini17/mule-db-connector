@@ -203,6 +203,14 @@
                             <groupId>mysql</groupId>
                             <artifactId>mysql-connector-java</artifactId>
                         </sharedLibrary>
+                        <sharedLibrary>
+                            <groupId>com.microsoft.sqlserver</groupId>
+                            <artifactId>mssql-jdbc</artifactId>
+                        </sharedLibrary>
+                        <sharedLibrary>
+                            <groupId>com.oracle</groupId>
+                            <artifactId>ojdbc7</artifactId>
+                        </sharedLibrary>
                     </sharedLibraries>
                 </configuration>
                 <executions>
@@ -336,6 +344,14 @@
                                         <links>
                                             <link>oracledb</link>
                                         </links>
+                                        <wait>
+                                            <time>2000</time>
+                                            <exec>
+                                                <postStart>
+                                                    /go/bin/toxiproxy-cli create ${connection.lost.port}-1521 -l 0.0.0.0:${connection.lost.port} -u oracledb:1521
+                                                </postStart>
+                                            </exec>
+                                        </wait>
                                     </run>
                                 </image>
                             </images>
@@ -542,6 +558,14 @@
                                         <links>
                                             <link>mssql</link>
                                         </links>
+                                        <wait>
+                                            <time>2000</time>
+                                            <exec>
+                                                <postStart>
+                                                    /go/bin/toxiproxy-cli create ${connection.lost.port}-1433 -l 0.0.0.0:${connection.lost.port} -u mssql:1433
+                                                </postStart>
+                                            </exec>
+                                        </wait>
                                     </run>
                                 </image>
                             </images>
