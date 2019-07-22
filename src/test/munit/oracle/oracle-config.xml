@@ -13,14 +13,14 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
         </db:oracle-connection>
     </db:config>
 
-    <db:config name="ORACLE_CONFIG_XA_UNSTABLE" doc:name="Database Config" doc:id="f7f84727-15d3-40f0-a8b0-178ed0fded9a" >
-        <db:oracle-connection host="0.0.0.0" port="${connection.lost.port}" instance="ORCLCDB" user="SYSTEM" password="Oradoc_db1" useXaTransactions="true">
-            <reconnection >
-                <reconnect-forever frequency="500" />
-            </reconnection>
-            <db:pooling-profile/>
-        </db:oracle-connection>
-    </db:config>
+<!--    <db:config name="ORACLE_CONFIG_XA_UNSTABLE" doc:name="Database Config" doc:id="f7f84727-15d3-40f0-a8b0-178ed0fded9a" >-->
+<!--        <db:oracle-connection host="localhost" port="${connection.lost.port}" instance="ORCLCDB" user="SYSTEM" password="Oradoc_db1" useXaTransactions="true">-->
+<!--            <reconnection >-->
+<!--                <reconnect-forever frequency="500" />-->
+<!--            </reconnection>-->
+<!--            <db:pooling-profile/>-->
+<!--        </db:oracle-connection>-->
+<!--    </db:config>-->
 
     <db:config name="ORACLE_CONFIG_UNSTABLE" doc:name="Database Config" doc:id="f7f84727-15d3-40f0-a8b0-178ed0fded9a" >
         <db:oracle-connection host="0.0.0.0" port="${connection.lost.port}" instance="ORCLCDB" user="SYSTEM" password="Oradoc_db1">
@@ -31,7 +31,7 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
         </db:oracle-connection>
     </db:config>
 
-    <db:config name="ORACLE_CONFIG_2" doc:name="Database Config" doc:id="b1b70ef3-c016-4489-b84a-3f4f341c4fab" >
+    <db:config name="ORACLE_CONFIG_XA_UNSTABLE" doc:name="Database Config" doc:id="b1b70ef3-c016-4489-b84a-3f4f341c4fab" >
         <db:generic-connection url="jdbc:oracle:thin:@localhost:${connection.lost.port}:ORCLCDB" driverClassName="oracle.jdbc.driver.OracleDriver" user="SYSTEM" password="Oradoc_db1" useXaTransactions="true">
             <reconnection >
                 <reconnect-forever frequency="500" />

@@ -56,11 +56,11 @@
         <munit:execution>
             <flow-ref name="disconnectProxy"/>
             <async>
-                <logger message="#[ import * from dw::Runtime --- '' wait 2000]"/>
+                <logger message="#[ import * from dw::Runtime --- '' wait 1000]"/>
                 <flow-ref name="reconnectProxy"/>
             </async>
             <try transactionType="XA" transactionalAction="ALWAYS_BEGIN">
-                <until-successful maxRetries="10" millisBetweenRetries="500">
+                <until-successful maxRetries="10" millisBetweenRetries="1000">
                     <logger message="Trying to insert"/>
                     <flow-ref name="executeInsertXAUnstable"/>
                 </until-successful>
@@ -145,7 +145,7 @@
 
     <flow name="reconnectProxy">
         <java:invoke-static class="org.mule.extension.db.internal.Utils.BadProxy" method="resolveConnectivityIssue()"/>
-        <logger message="#[ import * from dw::Runtime --- 'Waiting on reconnect' wait 3000]"/>
+        <logger message="#[ import * from dw::Runtime --- 'Waiting on reconnect' wait 5000]"/>
     </flow>
 
 
