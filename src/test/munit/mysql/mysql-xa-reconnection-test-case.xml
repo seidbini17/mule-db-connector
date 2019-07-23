@@ -2,22 +2,23 @@
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
       xmlns:db="http://www.mulesoft.org/schema/mule/db"
-      xmlns:java="http://www.mulesoft.org/schema/mule/java"
+      xmlns:connection-test="http://www.mulesoft.org/schema/mule/connection-test"
       xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
       xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
       http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
       http://www.mulesoft.org/schema/mule/munit-tools http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
-      http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+      http://www.mulesoft.org/schema/mule/connection-test http://www.mulesoft.org/schema/mule/connection-test/current/mule-connection-test.xsd
       http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
       ">
 
     <munit:config name="mysql-xa-reconnection-test-case.xml" minMuleVersion="4.2.1"/>
 
-    <munit:before-suite name="before-db-test-suites" description="Before suite actions">
+    <munit:before-suite name="before-mysql-test-suites" description="Before suite actions">
+        <connection-test:create-proxy realPort="3306" realHost="mysql" proxyPort="${connection.lost.port}"/>
         <flow-ref name="executeDdlXA"/>
     </munit:before-suite>
 
-    <munit:test name="insert-lost-and-recovered" >
+    <munit:test name="insert-lost-and-recovered" ignore="#[p('mysql') == null]">
 
         <munit:execution>
             <flow-ref name="disconnectProxy"/>
@@ -51,7 +52,7 @@
 
     </munit:test>
 
-    <munit:test name="connection-lost-and-eventually-recovered">
+    <munit:test name="connection-lost-and-eventually-recovered" ignore="#[p('mysql') == null]">
 
         <munit:execution>
             <flow-ref name="disconnectProxy"/>
@@ -81,7 +82,7 @@
 
     </munit:test>
 
-    <munit:test name="connection-lost-and-never-recover">
+    <munit:test name="connection-lost-and-never-recover" ignore="#[p('mysql') == null]">
         <munit:behavior>
             <flow-ref name="disconnectProxy"/>
         </munit:behavior>
@@ -132,22 +133,5 @@
 }]]]></db:input-parameters>
         </db:insert>
     </flow>
-
-    <flow name="disconnectProxy">
-        <java:invoke-static class="org.mule.extension.db.internal.Utils.BadProxy" method="generateConnectivityIssue(String, String, String)">
-            <java:args>
-                #[{arg0: "3306", arg1: "mysql", arg2: ${connection.lost.port}}]
-            </java:args>
-        </java:invoke-static>
-        <logger message="#[ import * from dw::Runtime --- '' wait 500]"/>
-
-    </flow>
-
-    <flow name="reconnectProxy">
-        <java:invoke-static class="org.mule.extension.db.internal.Utils.BadProxy" method="resolveConnectivityIssue()"/>
-        <logger message="#[ import * from dw::Runtime --- 'Waiting on reconnect' wait 3000]"/>
-    </flow>
-
-
 
 </mule>

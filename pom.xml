@@ -144,9 +144,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.mule.module</groupId>
-            <artifactId>mule-java-module</artifactId>
-            <version>1.2.1</version>
+            <groupId>org.mule.modules</groupId>
+            <artifactId>mule-connection-test-module</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
             <classifier>mule-plugin</classifier>
             <scope>test</scope>
         </dependency>
@@ -346,11 +346,6 @@
                                         </links>
                                         <wait>
                                             <time>2000</time>
-                                            <exec>
-                                                <postStart>
-                                                    /go/bin/toxiproxy-cli create ${connection.lost.port}-1521 -l 0.0.0.0:${connection.lost.port} -u oracledb:1521
-                                                </postStart>
-                                            </exec>
                                         </wait>
                                     </run>
                                 </image>
@@ -453,11 +448,6 @@
                                         </links>
                                         <wait>
                                             <time>2000</time>
-                                            <exec>
-                                                <postStart>
-                                                    /go/bin/toxiproxy-cli create ${connection.lost.port}-3306 -l 0.0.0.0:${connection.lost.port} -u mysql:3306
-                                                </postStart>
-                                            </exec>
                                         </wait>
                                     </run>
                                 </image>
@@ -560,11 +550,6 @@
                                         </links>
                                         <wait>
                                             <time>2000</time>
-                                            <exec>
-                                                <postStart>
-                                                    /go/bin/toxiproxy-cli create ${connection.lost.port}-1433 -l 0.0.0.0:${connection.lost.port} -u mssql:1433
-                                                </postStart>
-                                            </exec>
                                         </wait>
                                     </run>
                                 </image>
