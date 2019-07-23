@@ -1,9 +1,18 @@
 <mule xmlns="http://www.mulesoft.org/schema/mule/core"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
       xmlns:connection-test="http://www.mulesoft.org/schema/mule/connection-test"
       xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
       http://www.mulesoft.org/schema/mule/connection-test http://www.mulesoft.org/schema/mule/connection-test/current/mule-connection-test.xsd
+      http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
       ">
+
+    <vm:config name="VM_Config" >
+        <vm:queues >
+            <vm:queue queueName="testQueue" />
+            <vm:queue queueName="listenerQueue" />
+        </vm:queues>
+    </vm:config>
 
     <flow name="disconnectProxy">
         <connection-test:disconnect-proxy proxyPort="${connection.lost.port}"/>
@@ -15,6 +24,8 @@
         <connection-test:reconnect-proxy proxyPort="${connection.lost.port}"/>
         <logger message="#[ import * from dw::Runtime --- 'Waiting on reconnect' wait 3000]"/>
     </flow>
+
+
 
 
 </mule>

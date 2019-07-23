@@ -2,6 +2,7 @@
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
       xmlns:db="http://www.mulesoft.org/schema/mule/db"
+      xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
       xmlns:connection-test="http://www.mulesoft.org/schema/mule/connection-test"
       xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
       xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
@@ -9,22 +10,21 @@
       http://www.mulesoft.org/schema/mule/munit-tools http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
       http://www.mulesoft.org/schema/mule/connection-test http://www.mulesoft.org/schema/mule/connection-test/current/mule-connection-test.xsd
       http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+      http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
       ">
 
-    <munit:config name="mssql-xa-reconnection-test-case.xml" minMuleVersion="4.2.1"/>
+    <munit:config name="mssql-xa-reconnection-test-case.xml" minMuleVersion="4.1.6"/>
 
     <munit:before-suite name="before-mssql-test-suites" description="Before suite actions">
         <connection-test:create-proxy realPort="1433" realHost="mssql" proxyPort="${connection.lost.port}"/>
         <flow-ref name="mssql-executeDdlXA"/>
     </munit:before-suite>
 
-    <munit:test name="mssql-insert-lost-and-recovered" ignore="#[p('mssql') == null]">
+    <munit:test name="mssql-insert-lost-and-recovered" ignore="#[p('mssql') == null or Munit::muleVersionEqualTo('4.2.0')]">
 
         <munit:execution>
             <flow-ref name="disconnectProxy"/>
             <logger level="INFO" message="publishing from unstable connection"/>
-            <set-variable variableName="imageName" value="mssql"/>
-            <set-variable variableName="message" value="#[randomInt(1000000) as String]"/>
             <try transactionType="XA" transactionalAction="ALWAYS_BEGIN">
             <flow-ref name="mssql-executeInsertXAUnstable"/>
                 <error-handler>
@@ -52,7 +52,56 @@
 
     </munit:test>
 
-    <munit:test name="mssql-connection-lost-and-eventually-recovered" ignore="#[p('mssql') == null]">
+    <munit:test name="mssql-vm-insert-lost-and-recovered" ignore="#[p('mssql') == null or Munit::muleVersionEqualTo('4.2.0')]">
+        <munit:execution>
+            <vm:publish config-ref="VM_Config" queueName="testQueue">
+                <vm:content ><![CDATA[#[output application/java ---
+{
+	data:"test"
+}]]]></vm:content>
+            </vm:publish>
+            <flow-ref name="disconnectProxy"/>
+            <logger level="INFO" message="publishing from unstable connection"/>
+            <try>
+                <try transactionType="XA" transactionalAction="ALWAYS_BEGIN">
+                    <vm:consume config-ref="VM_Config" queueName="testQueue"/>
+                    <flow-ref name="mssql-executeInsertXAUnstable"/>
+                    <error-handler>
+                        <on-error-propagate logException="false" type="DB:CONNECTIVITY">
+                            <logger message="Connectivity error"/>
+                        </on-error-propagate>
+                    </error-handler>
+                </try>
+                <error-handler>
+                    <on-error-continue logException="false" type="DB:CONNECTIVITY">
+                        <logger message="Continuing execution"/>
+                    </on-error-continue>
+                </error-handler>
+            </try>
+            <flow-ref name="reconnectProxy"/>
+            <try transactionType="XA" transactionalAction="ALWAYS_BEGIN">
+                <flow-ref name="mssql-executeInsertXAUnstable"/>
+            </try>
+        </munit:execution>
+
+        <munit:validation>
+            <db:select config-ref="MSSQL_CONFIG_XA_UNSTABLE">
+                <db:sql>SELECT COUNT(*) as theCount from TestDdl</db:sql>
+            </db:select>
+            <munit-tools:assert-equals
+                    actual="#[payload.theCount[0]]"
+                    expected="#[1]"
+                    message="Should have one record"/>
+            <vm:consume config-ref="VM_Config" queueName="testQueue"/>
+            <munit-tools:assert-equals
+                    actual="#[payload.data]"
+                    expected="#['test']"
+                    message="VM should still have a test record"/>
+            <flow-ref name="deleteTableMSSql"/>
+        </munit:validation>
+    </munit:test>
+
+    <munit:test name="mssql-connection-lost-and-eventually-recovered" ignore="#[p('mssql') == null or Munit::muleVersionEqualTo('4.2.0')]">
 
         <munit:execution>
             <flow-ref name="disconnectProxy"/>
@@ -82,7 +131,7 @@
 
     </munit:test>
 
-    <munit:test name="mssql-connection-lost-and-never-recover" ignore="#[p('mssql') == null]">
+    <munit:test name="mssql-connection-lost-and-never-recover" ignore="#[p('mssql') == null or Munit::muleVersionEqualTo('4.2.0')]">
         <munit:behavior>
             <flow-ref name="disconnectProxy"/>
         </munit:behavior>
@@ -113,6 +162,30 @@
         </munit:validation>
     </munit:test>
 
+    <munit:test name="mssql-vm-listener-test" ignore="#[p('mssql') == null or Munit::muleVersionEqualTo('4.2.0')]">
+
+        <munit:enable-flow-sources>
+            <munit:enable-flow-source value="mssql-vmListenerFlow"/>
+        </munit:enable-flow-sources>
+
+        <munit:execution>
+            <vm:publish config-ref="VM_Config" queueName="listenerQueue">
+                <vm:content >
+                    <![CDATA[#[output application/java ---
+                    {
+                        data:"testListener"
+                    }]]]>
+                </vm:content>
+            </vm:publish>
+            <logger message="#[ import * from dw::Runtime --- 'Waiting on VM operations' wait 500]"/>
+        </munit:execution>
+
+        <munit:validation>
+            <flow-ref name="deleteTableMSSql"/>
+            <munit-tools:assert-that expression="#[MunitTools::queueSize('VALIDATION_QUEUE')]" is="#[MunitTools::equalTo(1)]" />
+        </munit:validation>
+    </munit:test>
+
     <flow name="mssql-executeDdlXA">
         <db:execute-ddl config-ref="MSSQL_CONFIG_XA" queryTimeout="10" queryTimeoutUnit="SECONDS">
             <db:sql>CREATE TABLE TestDdl(NAME VARCHAR(255))</db:sql>
@@ -132,6 +205,18 @@
 	aName: "test1"
 }]]]></db:input-parameters>
         </db:insert>
+    </flow>
+
+    <flow name="mssql-vmListenerFlow">
+        <vm:listener config-ref="VM_Config" numberOfConsumers="1" queueName="listenerQueue" transactionalAction="ALWAYS_BEGIN" transactionType="XA">
+            <redelivery-policy />
+        </vm:listener>
+        <flow-ref name="mssql-executeInsertXAUnstable"/>
+        <logger level="INFO" message="Inserting into validation queue"/>
+        <munit-tools:queue queueName="VALIDATION_QUEUE">
+            <munit-tools:value>#[1]</munit-tools:value>
+        </munit-tools:queue>
+
     </flow>
 
 </mule>

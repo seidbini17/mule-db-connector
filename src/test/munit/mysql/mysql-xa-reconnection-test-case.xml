@@ -1,5 +1,6 @@
 <mule xmlns="http://www.mulesoft.org/schema/mule/core"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
       xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
       xmlns:db="http://www.mulesoft.org/schema/mule/db"
       xmlns:connection-test="http://www.mulesoft.org/schema/mule/connection-test"
@@ -9,6 +10,7 @@
       http://www.mulesoft.org/schema/mule/munit-tools http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
       http://www.mulesoft.org/schema/mule/connection-test http://www.mulesoft.org/schema/mule/connection-test/current/mule-connection-test.xsd
       http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+      http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
       ">
 
     <munit:config name="mysql-xa-reconnection-test-case.xml" minMuleVersion="4.2.1"/>
@@ -18,8 +20,7 @@
         <flow-ref name="mysql-executeDdlXA"/>
     </munit:before-suite>
 
-    <munit:test name="insert-lost-and-recovered" ignore="#[p('mysql') == null]">
-
+    <munit:test name="mysql-insert-lost-and-recovered" ignore="#[p('mysql') == null]">
         <munit:execution>
             <flow-ref name="disconnectProxy"/>
             <logger level="INFO" message="publishing from unstable connection"/>
@@ -49,11 +50,60 @@
                     message="Should have one record"/>
             <flow-ref name="deleteTableMySql"/>
         </munit:validation>
-
     </munit:test>
 
-    <munit:test name="connection-lost-and-eventually-recovered" ignore="#[p('mysql') == null]">
+    <munit:test name="mysql-vm-insert-lost-and-recovered" ignore="#[p('mysql') == null]">
+        <munit:execution>
+            <vm:publish config-ref="VM_Config" queueName="testQueue">
+                <vm:content ><![CDATA[#[output application/java ---
+{
+	data:"test"
+}]]]></vm:content>
+            </vm:publish>
+            <flow-ref name="disconnectProxy"/>
+            <logger level="INFO" message="publishing from unstable connection"/>
+            <set-variable variableName="imageName" value="mssql"/>
+            <set-variable variableName="message" value="#[randomInt(1000000) as String]"/>
+            <try>
+                <try transactionType="XA" transactionalAction="ALWAYS_BEGIN">
+                    <vm:consume config-ref="VM_Config" queueName="testQueue"/>
+                    <flow-ref name="mysql-executeInsertXAUnstable"/>
+                    <error-handler>
+                        <on-error-propagate logException="false" type="DB:CONNECTIVITY">
+                            <logger message="Connectivity error"/>
+                        </on-error-propagate>
+                    </error-handler>
+                </try>
+                <error-handler>
+                    <on-error-continue logException="false" type="DB:CONNECTIVITY">
+                        <logger message="Continuing execution"/>
+                    </on-error-continue>
+                </error-handler>
+            </try>
+            <flow-ref name="reconnectProxy"/>
+            <try transactionType="XA" transactionalAction="ALWAYS_BEGIN">
+                <flow-ref name="mysql-executeInsertXAUnstable"/>
+            </try>
+        </munit:execution>
 
+        <munit:validation>
+            <db:select config-ref="MYSQL_CONFIG_XA_UNSTABLE">
+                <db:sql>SELECT COUNT(*) as theCount from TestDdl</db:sql>
+            </db:select>
+            <munit-tools:assert-equals
+                    actual="#[payload.theCount[0]]"
+                    expected="#[1]"
+                    message="Should have one record"/>
+            <vm:consume config-ref="VM_Config" queueName="testQueue"/>
+            <munit-tools:assert-equals
+                    actual="#[payload.data]"
+                    expected="#['test']"
+                    message="VM should still have a test record"/>
+            <flow-ref name="deleteTableMySql"/>
+        </munit:validation>
+    </munit:test>
+
+    <munit:test name="mysql-connection-lost-and-eventually-recovered" ignore="#[p('mysql') == null]">
         <munit:execution>
             <flow-ref name="disconnectProxy"/>
             <async>
@@ -77,12 +127,10 @@
                     expected="#[1]"
                     message="Should have one record"/>
             <flow-ref name="deleteTableMySql"/>
-
         </munit:validation>
-
     </munit:test>
 
-    <munit:test name="connection-lost-and-never-recover" ignore="#[p('mysql') == null]">
+    <munit:test name="mysql-connection-lost-and-never-recover" ignore="#[p('mysql') == null]">
         <munit:behavior>
             <flow-ref name="disconnectProxy"/>
         </munit:behavior>
