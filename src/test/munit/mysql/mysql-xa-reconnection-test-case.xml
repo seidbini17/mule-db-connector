@@ -15,7 +15,7 @@
 
     <munit:before-suite name="before-mysql-test-suites" description="Before suite actions">
         <connection-test:create-proxy realPort="3306" realHost="mysql" proxyPort="${connection.lost.port}"/>
-        <flow-ref name="executeDdlXA"/>
+        <flow-ref name="mysql-executeDdlXA"/>
     </munit:before-suite>
 
     <munit:test name="insert-lost-and-recovered" ignore="#[p('mysql') == null]">
@@ -26,7 +26,7 @@
             <set-variable variableName="imageName" value="mssql"/>
             <set-variable variableName="message" value="#[randomInt(1000000) as String]"/>
             <try transactionType="XA" transactionalAction="ALWAYS_BEGIN">
-            <flow-ref name="executeInsertXAUnstable"/>
+            <flow-ref name="mysql-executeInsertXAUnstable"/>
                 <error-handler>
                     <on-error-continue logException="false" type="DB:CONNECTIVITY">
                         <logger message="Connectivity error"/>
@@ -35,7 +35,7 @@
             </try>
             <flow-ref name="reconnectProxy"/>
             <try transactionType="XA" transactionalAction="ALWAYS_BEGIN">
-                <flow-ref name="executeInsertXAUnstable"/>
+                <flow-ref name="mysql-executeInsertXAUnstable"/>
             </try>
         </munit:execution>
 
@@ -63,7 +63,7 @@
             <try transactionType="XA" transactionalAction="ALWAYS_BEGIN">
                 <until-successful maxRetries="10" millisBetweenRetries="500">
                     <logger message="Trying to insert"/>
-                    <flow-ref name="executeInsertXAUnstable"/>
+                    <flow-ref name="mysql-executeInsertXAUnstable"/>
                 </until-successful>
             </try>
         </munit:execution>
@@ -91,7 +91,7 @@
             <try>
                 <try transactionType="XA" transactionalAction="ALWAYS_BEGIN">
                     <until-successful maxRetries="3" millisBetweenRetries="1000">
-                        <flow-ref name="executeInsertXAUnstable"/>
+                        <flow-ref name="mysql-executeInsertXAUnstable"/>
                     </until-successful>
                 </try>
                 <error-handler>
@@ -113,7 +113,7 @@
         </munit:validation>
     </munit:test>
 
-    <flow name="executeDdlXA">
+    <flow name="mysql-executeDdlXA">
         <db:execute-ddl config-ref="MYSQL_CONFIG_XA" queryTimeout="10" queryTimeoutUnit="SECONDS">
             <db:sql>CREATE TABLE TestDdl(NAME VARCHAR(255))</db:sql>
         </db:execute-ddl>
@@ -125,7 +125,7 @@
         </db:delete>
     </flow>
 
-    <flow name="executeInsertXAUnstable">
+    <flow name="mysql-executeInsertXAUnstable">
         <db:insert config-ref="MYSQL_CONFIG_XA_UNSTABLE">
             <db:sql>INSERT INTO TestDdl(Name) VALUES (:aName)</db:sql>
             <db:input-parameters><![CDATA[#[{
