@@ -23,8 +23,6 @@
         <munit:execution>
             <flow-ref name="disconnectProxy"/>
             <logger level="INFO" message="publishing from unstable connection"/>
-            <set-variable variableName="imageName" value="oracledb"/>
-            <set-variable variableName="message" value="#[randomInt(1000000) as String]"/>
             <try transactionType="XA" transactionalAction="ALWAYS_BEGIN">
             <flow-ref name="oracle-executeInsertXAUnstable"/>
                 <error-handler>
@@ -77,7 +75,6 @@
                     expected="#[1]"
                     message="Should have one record"/>
             <flow-ref name="deleteTableOracle"/>
-
         </munit:validation>
 
     </munit:test>

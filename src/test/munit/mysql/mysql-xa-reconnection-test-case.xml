@@ -24,8 +24,6 @@
         <munit:execution>
             <flow-ref name="disconnectProxy"/>
             <logger level="INFO" message="publishing from unstable connection"/>
-            <set-variable variableName="imageName" value="mssql"/>
-            <set-variable variableName="message" value="#[randomInt(1000000) as String]"/>
             <try transactionType="XA" transactionalAction="ALWAYS_BEGIN">
             <flow-ref name="mysql-executeInsertXAUnstable"/>
                 <error-handler>
@@ -62,8 +60,6 @@
             </vm:publish>
             <flow-ref name="disconnectProxy"/>
             <logger level="INFO" message="publishing from unstable connection"/>
-            <set-variable variableName="imageName" value="mssql"/>
-            <set-variable variableName="message" value="#[randomInt(1000000) as String]"/>
             <try>
                 <try transactionType="XA" transactionalAction="ALWAYS_BEGIN">
                     <vm:consume config-ref="VM_Config" queueName="testQueue"/>

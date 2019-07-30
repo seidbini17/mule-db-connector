@@ -13,6 +13,7 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
         </db:oracle-connection>
     </db:config>
 
+    <!-- Commenting out oracle-connection and using generic until MULE-17238 is solved -->
 <!--    <db:config name="ORACLE_CONFIG_XA_UNSTABLE" doc:name="Database Config" doc:id="f7f84727-15d3-40f0-a8b0-178ed0fded9a" >-->
 <!--        <db:oracle-connection host="localhost" port="${connection.lost.port}" instance="ORCLCDB" user="SYSTEM" password="Oradoc_db1" useXaTransactions="true">-->
 <!--            <reconnection >-->
