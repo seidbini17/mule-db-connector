@@ -18,7 +18,7 @@
         <flow-ref name="oracle-executeDdlXA"/>
     </munit:before-suite>
 
-    <munit:test name="oracle-insert-lost-and-recovered" ignore="#[p('oracle') == null]">
+    <munit:test name="oracle-insert-lost-and-recovered" ignore="#[p('oracle') == null or Munit::muleVersionEqualTo('4.2.0')]">
 
         <munit:execution>
             <flow-ref name="disconnectProxy"/>
@@ -50,7 +50,7 @@
 
     </munit:test>
 
-    <munit:test name="oracle-connection-lost-and-eventually-recovered" ignore="#[p('oracle') == null]">
+    <munit:test name="oracle-connection-lost-and-eventually-recovered" ignore="#[p('oracle') == null or Munit::muleVersionEqualTo('4.2.0')]">
 
         <munit:execution>
             <flow-ref name="disconnectProxy"/>
@@ -79,7 +79,7 @@
 
     </munit:test>
 
-    <munit:test name="oracle-connection-lost-and-never-recover" ignore="#[p('oracle') == null]">
+    <munit:test name="oracle-connection-lost-and-never-recover" ignore="#[p('oracle') == null or Munit::muleVersionEqualTo('4.2.0')]">
         <munit:behavior>
             <flow-ref name="disconnectProxy"/>
         </munit:behavior>

@@ -146,13 +146,7 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.mule.connectors</groupId>
-            <artifactId>mule-vm-connector</artifactId>
-            <version>2.0.0</version>
-            <classifier>mule-plugin</classifier>
-            <scope>test</scope>
-        </dependency>
+
 
     </dependencies>
 
@@ -214,6 +208,29 @@
                             <groupId>com.oracle</groupId>
                             <artifactId>ojdbc7</artifactId>
                         </sharedLibrary>
+                        <sharedLibrary>
+                            <groupId>org.springframework</groupId>
+                            <artifactId>spring-beans</artifactId>
+                        </sharedLibrary>
+                        <sharedLibrary>
+                            <groupId>org.springframework</groupId>
+                            <artifactId>spring-core</artifactId>
+                        </sharedLibrary>
+                        <sharedLibrary>
+                            <groupId>org.springframework.security</groupId>
+                            <artifactId>spring-security-core</artifactId>
+                        </sharedLibrary>
+                        <sharedLibrary>
+                            <groupId>org.springframework</groupId>
+                            <artifactId>spring-context</artifactId>
+                        </sharedLibrary>
+                        <sharedLibrary>
+                            <groupId>org.springframework.security</groupId>
+                            <artifactId>spring-security-config</artifactId>
+                        </sharedLibrary>
+                        <sharedLibrary>
+                            <groupId>org.mule.btm</groupId>
+                            <artifactId>mule-btm</artifactId></sharedLibrary>
                     </sharedLibraries>
                 </configuration>
                 <executions>
@@ -237,6 +254,53 @@
                         <artifactId>munit-tools</artifactId>
                         <version>${munit.version}</version>
                         <classifier>mule-plugin</classifier>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.mule.btm</groupId>
+                        <artifactId>mule-btm</artifactId>
+                        <version>2.1.8</version>
+                    </dependency>
+
+                    <dependency>
+                        <groupId>org.mule.connectors</groupId>
+                        <artifactId>mule-vm-connector</artifactId>
+                        <version>2.0.0</version>
+                        <classifier>mule-plugin</classifier>
+                    </dependency>
+
+                    <dependency>
+                        <groupId>org.mule.modules</groupId>
+                        <artifactId>mule-spring-module</artifactId>
+                        <version>1.3.0</version>
+                        <classifier>mule-plugin</classifier>
+
+                    </dependency>
+                    <dependency>
+                        <groupId>org.springframework</groupId>
+                        <artifactId>spring-beans</artifactId>
+                        <version>4.1.9.RELEASE</version>
+
+                    </dependency>
+                    <dependency>
+                        <groupId>org.springframework</groupId>
+                        <artifactId>spring-core</artifactId>
+                        <version>4.1.9.RELEASE</version>
+                    </dependency>
+
+                    <dependency>
+                        <groupId>org.springframework.security</groupId>
+                        <artifactId>spring-security-core</artifactId>
+                        <version>5.1.5.RELEASE</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.springframework</groupId>
+                        <artifactId>spring-context</artifactId>
+                        <version>4.1.9.RELEASE</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.springframework.security</groupId>
+                        <artifactId>spring-security-config</artifactId>
+                        <version>5.1.5.RELEASE</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -451,6 +515,11 @@
                                         </links>
                                         <wait>
                                             <time>2000</time>
+                                            <exec>
+                                                <postStart>
+                                                    /go/bin/toxiproxy-cli create ${connection.lost.port} -l 0.0.0.0:${connection.lost.port} -u mysql:3306
+                                                </postStart>
+                                            </exec>
                                         </wait>
                                     </run>
                                 </image>
@@ -513,15 +582,19 @@
                         <configuration>
                             <images>
                                 <image>
-                                    <name>microsoft/mssql-server-linux</name>
+                                    <name>mcr.microsoft.com/mssql/server:2019-CTP3.2-ubuntu</name>
                                     <alias>mssql</alias>
                                     <run>
                                         <env>
                                             <SA_PASSWORD>yourStrong(!)Password</SA_PASSWORD>
                                             <ACCEPT_EULA>Y</ACCEPT_EULA>
+                                            <MSSQL_RPC_PORT>135</MSSQL_RPC_PORT>
+                                            <MSSQL_DTC_TCP_PORT>51000</MSSQL_DTC_TCP_PORT>
                                         </env>
                                         <ports>
                                             <port>1433:1433</port>
+                                            <port>135:135</port>
+                                            <port>51000:51000</port>
                                         </ports>
                                         <ulimits>
                                             <ulimit>
@@ -552,6 +625,11 @@
                                             <link>mssql</link>
                                         </links>
                                         <wait>
+                                            <exec>
+                                                <postStart>
+                                                    /go/bin/toxiproxy-cli create ${connection.lost.port} -l 0.0.0.0:${connection.lost.port} -u mssql:1433
+                                                </postStart>
+                                            </exec>
                                             <time>2000</time>
                                         </wait>
                                     </run>

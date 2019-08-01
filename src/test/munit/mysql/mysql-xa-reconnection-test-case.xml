@@ -20,7 +20,7 @@
         <flow-ref name="mysql-executeDdlXA"/>
     </munit:before-suite>
 
-    <munit:test name="mysql-insert-lost-and-recovered" ignore="#[p('mysql') == null]">
+    <munit:test name="mysql-insert-lost-and-recovered" ignore="#[p('mysql') == null or Munit::muleVersionEqualTo('4.2.0')]">
         <munit:execution>
             <flow-ref name="disconnectProxy"/>
             <logger level="INFO" message="publishing from unstable connection"/>
@@ -50,7 +50,7 @@
         </munit:validation>
     </munit:test>
 
-    <munit:test name="mysql-vm-insert-lost-and-recovered" ignore="#[p('mysql') == null]">
+    <munit:test name="mysql-vm-insert-lost-and-recovered" ignore="#[p('mysql') == null or Munit::muleVersionEqualTo('4.2.0')]">
         <munit:execution>
             <vm:publish config-ref="VM_Config" queueName="testQueue">
                 <vm:content ><![CDATA[#[output application/java ---
@@ -99,7 +99,7 @@
         </munit:validation>
     </munit:test>
 
-    <munit:test name="mysql-connection-lost-and-eventually-recovered" ignore="#[p('mysql') == null]">
+    <munit:test name="mysql-connection-lost-and-eventually-recovered" ignore="#[p('mysql') == null or Munit::muleVersionEqualTo('4.2.0')]">
         <munit:execution>
             <flow-ref name="disconnectProxy"/>
             <async>
@@ -126,7 +126,7 @@
         </munit:validation>
     </munit:test>
 
-    <munit:test name="mysql-connection-lost-and-never-recover" ignore="#[p('mysql') == null]">
+    <munit:test name="mysql-connection-lost-and-never-recover" ignore="#[p('mysql') == null or Munit::muleVersionEqualTo('4.2.0')]">
         <munit:behavior>
             <flow-ref name="disconnectProxy"/>
         </munit:behavior>
@@ -157,6 +157,29 @@
         </munit:validation>
     </munit:test>
 
+    <munit:test name="mysql-vm-listener-test" ignore="#[p('mysql') == null or Munit::muleVersionEqualTo('4.2.0')]">
+        <munit:enable-flow-sources>
+            <munit:enable-flow-source value="mysql-vmListenerFlow"/>
+        </munit:enable-flow-sources>
+
+        <munit:execution>
+            <vm:publish config-ref="VM_Config" queueName="listenerQueueMySql">
+                <vm:content >
+                    <![CDATA[#[output application/java ---
+                    {
+                        data:"testListener"
+                    }]]]>
+                </vm:content>
+            </vm:publish>
+            <logger message="#[ import * from dw::Runtime --- 'Waiting on VM operations' wait 500]"/>
+        </munit:execution>
+
+        <munit:validation>
+            <flow-ref name="deleteTableMySql"/>
+            <munit-tools:assert-that expression="#[MunitTools::queueSize('VALIDATION_QUEUE')]" is="#[MunitTools::equalTo(1)]" />
+        </munit:validation>
+    </munit:test>
+
     <flow name="mysql-executeDdlXA">
         <db:execute-ddl config-ref="MYSQL_CONFIG_XA" queryTimeout="10" queryTimeoutUnit="SECONDS">
             <db:sql>CREATE TABLE TestDdl(NAME VARCHAR(255))</db:sql>
@@ -176,6 +199,18 @@
 	aName: "test1"
 }]]]></db:input-parameters>
         </db:insert>
+    </flow>
+
+    <flow name="mysql-vmListenerFlow">
+        <vm:listener config-ref="VM_Config" numberOfConsumers="1" queueName="listenerQueueMySql" transactionalAction="ALWAYS_BEGIN" transactionType="XA">
+            <redelivery-policy />
+        </vm:listener>
+        <flow-ref name="mysql-executeInsertXAUnstable"/>
+        <logger level="INFO" message="Inserting into validation queue"/>
+        <munit-tools:queue queueName="VALIDATION_QUEUE">
+            <munit-tools:value>#[1]</munit-tools:value>
+        </munit-tools:queue>
+
     </flow>
 
 </mule>

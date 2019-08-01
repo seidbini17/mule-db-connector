@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+               http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+
+<!--    <bean id="mssqlDS" class="bitronix.tm.resource.jdbc.PoolingDataSource" init-method="init" destroy-method="close">-->
+<!--        <property name="className" value="com.microsoft.sqlserver.jdbc.SQLServerXADataSource" />-->
+<!--        <property name="uniqueName" value="mssqlDS" />-->
+<!--        <property name="minPoolSize" value="1" />-->
+<!--        <property name="maxPoolSize" value="10" />-->
+<!--        <property name="acquisitionInterval" value="1" />-->
+<!--        <property name="acquisitionTimeout" value="15" />-->
+<!--        <property name="maxIdleTime" value="15" />-->
+<!--        <property name="enableJdbc4ConnectionTest" value="true" />-->
+<!--        <property name="driverProperties" >-->
+<!--            <props>-->
+<!--                <prop key="user">sa</prop>-->
+<!--                <prop key="password">yourStrong(!)Password</prop>-->
+<!--                <prop key="serverName">localhost</prop>-->
+<!--                <prop key="portNumber">${connLostPort}</prop>-->
+<!--            </props>-->
+<!--        </property>-->
+<!--    </bean>-->
+
+<!--    <bean id="mysqlDS" class="bitronix.tm.resource.jdbc.PoolingDataSource" init-method="init" destroy-method="close">-->
+<!--        <property name="className" value="com.mysql.jdbc.jdbc2.optional.MysqlXADataSource" />-->
+<!--        <property name="uniqueName" value="mysqlDS" />-->
+<!--        <property name="minPoolSize" value="1" />-->
+<!--        <property name="maxPoolSize" value="10" />-->
+<!--        <property name="acquisitionInterval" value="1" />-->
+<!--        <property name="acquisitionTimeout" value="15" />-->
+<!--        <property name="maxIdleTime" value="15" />-->
+<!--        <property name="enableJdbc4ConnectionTest" value="true" />-->
+<!--        <property name="driverProperties" >-->
+<!--            <props>-->
+<!--                <prop key="user">root</prop>-->
+<!--                <prop key="password">password</prop>-->
+<!--                <prop key="serverName">localhost</prop>-->
+<!--                <prop key="portNumber">${connLostPort}</prop>-->
+<!--                <prop key="databaseName">xe</prop>-->
+<!--            </props>-->
+<!--        </property>-->
+<!--    </bean>-->
+
+    <bean id="mssqlDataSource" class="com.microsoft.sqlserver.jdbc.SQLServerXADataSource" primary="true">
+        <property name="user" value="sa"/>
+        <property name="password" value="yourStrong(!)Password"/>
+        <property name="serverName" value="localhost"/>
+        <property name="portNumber" value="${connLostPort}"/>
+    </bean>
+
+    <bean id="mysqlDataSource" class="com.mysql.jdbc.jdbc2.optional.MysqlXADataSource">
+        <property name="user" value="root"/>
+        <property name="password" value="password"/>
+        <property name="serverName" value="localhost"/>
+        <property name="portNumber" value="${connLostPort}"/>
+        <property name="databaseName" value="xe"/>
+    </bean>
+
+</beans>

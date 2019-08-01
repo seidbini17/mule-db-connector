@@ -7,17 +7,20 @@
       http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
       ">
 
+    <global-property name="connLostPort" value="${connection.lost.port}" />
+
     <vm:config name="VM_Config" >
         <vm:queues >
             <vm:queue queueName="testQueue" />
             <vm:queue queueName="listenerQueue" />
+            <vm:queue queueName="listenerQueueMySql" />
+
         </vm:queues>
     </vm:config>
 
     <flow name="disconnectProxy">
         <connection-test:disconnect-proxy proxyPort="${connection.lost.port}"/>
         <logger message="#[ import * from dw::Runtime --- '' wait 500]"/>
-
     </flow>
 
     <flow name="reconnectProxy">
