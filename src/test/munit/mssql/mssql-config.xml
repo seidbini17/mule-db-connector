@@ -14,7 +14,7 @@ http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/s
             <reconnection >
                 <reconnect-forever frequency="500" />
             </reconnection>
-            <db:pooling-profile maxPoolSize="16"/>
+            <db:pooling-profile/>
         </db:mssql-connection>
     </db:config>
 
@@ -31,21 +31,18 @@ http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/s
     <db:config name="MSSQL_CONFIG_XA_UNSTABLE" doc:name="Database Config" doc:id="f7f84727-15d3-40f0-a8b0-178ed0fded9a" >
         <db:mssql-connection host="0.0.0.0" port="${connection.lost.port}" user="sa" password="yourStrong(!)Password" useXaTransactions="true">
             <reconnection >
-                <reconnect-forever frequency="1000" />
+                <reconnect-forever frequency="500" />
             </reconnection>
-            <db:pooling-profile maxPoolSize="16"/>
-            <db:connection-properties >
-                <db:connection-property key="enableJdbc4ConnectionTest" value="true" />
-            </db:connection-properties>
+            <db:pooling-profile/>
         </db:mssql-connection>
     </db:config>
 
     <db:config name="MSSQL_CONFIG_UNSTABLE" doc:name="Database Config" doc:id="f7f84727-15d3-40f0-a8b0-178ed0fded9a" >
         <db:mssql-connection host="0.0.0.0" port="${connection.lost.port}" user="sa" password="yourStrong(!)Password" >
             <reconnection >
-                <reconnect-forever frequency="1000" />
+                <reconnect-forever frequency="500" />
             </reconnection>
-            <db:pooling-profile maxPoolSize="16"/>
+            <db:pooling-profile/>
         </db:mssql-connection>
     </db:config>
 </mule>

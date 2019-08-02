@@ -13,7 +13,7 @@
       http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
       ">
 
-    <munit:config name="mssql-xa-reconnection-test-case.xml" minMuleVersion="4.1.6"/>
+    <munit:config name="mssql-xa-reconnection-test-case.xml" minMuleVersion="4.2.1" />
 
     <munit:before-suite name="before-mssql-test-suites" description="Before suite actions">
         <connection-test:create-proxy realPort="1433" realHost="mssql" proxyPort="${connection.lost.port}"/>
@@ -114,7 +114,7 @@
                 <flow-ref name="reconnectProxy"/>
             </async>
             <try transactionType="XA" transactionalAction="ALWAYS_BEGIN">
-                <until-successful maxRetries="10" millisBetweenRetries="500">
+                <until-successful maxRetries="10" millisBetweenRetries="800">
                     <logger message="Trying to insert"/>
                     <flow-ref name="mssql-executeInsertXAUnstable"/>
                 </until-successful>
@@ -143,7 +143,7 @@
         <munit:execution>
             <try>
                 <try transactionType="XA" transactionalAction="ALWAYS_BEGIN">
-                    <until-successful maxRetries="3" millisBetweenRetries="1000">
+                    <until-successful maxRetries="2" millisBetweenRetries="2000">
                         <flow-ref name="mssql-executeInsertXAUnstable"/>
                     </until-successful>
                 </try>
