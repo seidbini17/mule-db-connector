@@ -31,4 +31,14 @@ public class StoredProcedureUtils {
     return matcher.group(3);
   }
 
+  public static String getPackageName(String sqlText) throws SQLException {
+    Matcher matcher = storedProcedureMatcher.matcher(sqlText);
+
+    if (!matcher.matches()) {
+      return "";
+    }
+
+    return matcher.group(2);
+  }
+
 }
