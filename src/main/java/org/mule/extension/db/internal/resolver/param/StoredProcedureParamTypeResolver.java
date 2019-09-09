@@ -27,6 +27,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -57,23 +58,33 @@ public class StoredProcedureParamTypeResolver implements ParamTypeResolver {
   @Override
   public Map<Integer, DbType> getParameterTypes(DbConnection connection, QueryTemplate queryTemplate, List<ParameterType> types)
       throws SQLException {
+    ResultSet procedureColumns = null;
+    Map<Integer, DbType> paramTypes = new HashMap<>();
     DatabaseMetaData dbMetaData = connection.getJdbcConnection().getMetaData();
 
-    String storedProcedurePkgName = getPackageName(queryTemplate.getSqlText());
+    String storedProcedurePkgName = getPackageName(queryTemplate.getSqlText()).replace(".", "");
     String storedProcedureName = getStoredProcedureName(queryTemplate.getSqlText());
     if (dbMetaData.storesUpperCaseIdentifiers()) {
-      storedProcedureName = storedProcedurePkgName.toUpperCase();
+      storedProcedurePkgName = storedProcedurePkgName.toUpperCase();
       storedProcedureName = storedProcedureName.toUpperCase();
     }
 
-    ResultSet procedureColumns =
-        dbMetaData.getProcedureColumns(connection.getJdbcConnection().getCatalog(), dbMetaData.getUserName(),
-                                       storedProcedurePkgName.isEmpty() ? storedProcedureName
-                                           : storedProcedurePkgName + "." + storedProcedureName,
-                                       "%");
+
+    //first select by package name, if no package name is present use no package name,
+    //if this doesn't work then select default catalog for connection
+    List<String> pckNames = Arrays.asList(!storedProcedurePkgName.isEmpty() ? storedProcedurePkgName : "",
+                                          connection.getJdbcConnection().getCatalog());
+
+    int i = 0;
+    while (paramTypes.isEmpty() && i < pckNames.size()) {
+      procedureColumns =
+          dbMetaData.getProcedureColumns(pckNames.get(i), connection.getJdbcConnection().getSchema(),
+                                         storedProcedureName, "%");
+      paramTypes = getStoredProcedureParamTypes(connection, pckNames.get(i), procedureColumns);
+      i++;
+    }
 
     try {
-      Map<Integer, DbType> paramTypes = getStoredProcedureParamTypes(connection, storedProcedureName, procedureColumns);
       validateQueryParams(queryTemplate, paramTypes);
       return paramTypes;
     } finally {
