@@ -22,6 +22,8 @@ import static org.junit.Assume.assumeThat;
 import static org.mule.extension.db.integration.DbTestUtil.DbType.MYSQL;
 
 import org.mule.extension.db.integration.AbstractDbIntegrationTestCase;
+import org.mule.metadata.api.model.ArrayType;
+import org.mule.metadata.api.model.MetadataType;
 import org.mule.metadata.api.model.NullType;
 import org.mule.metadata.api.model.ObjectFieldType;
 import org.mule.metadata.api.model.ObjectType;
@@ -49,6 +51,17 @@ public class SelectMetadataInputTestCase extends AbstractDbIntegrationTestCase {
         .filter(p -> p.getName().equals("inputParameters"))
         .findFirst().get().getType(),
                is(instanceOf(NullType.class)));
+  }
+
+  @Test
+  public void returnsAnySelectMetadataDynamicTableName() throws Exception {
+    MetadataResult<ComponentMetadataDescriptor<OperationModel>> metadata =
+            getMetadata("selectMetadata", "#[\"select * from $(vars.library)\"]");
+
+    assertThat(metadata.isSuccess(), is(true));
+    MetadataType outputType = metadata.get().getModel().getOutput().getType();
+    assertThat(outputType, is(instanceOf(ArrayType.class)));
+    assertThat(((ArrayType) outputType).getType(), is(instanceOf(ObjectType.class)));
   }
 
   @Test
